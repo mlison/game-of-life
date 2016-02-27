@@ -4,7 +4,7 @@ Well, the title says it all. This is a Javascript implementation of Conway's gam
 
 Hover over a cell to see what comparison it represents. You can also interact with cells by clicking on them.
 
-There's also a live demo <a href="https://github.com/mlison/game-of-life/" target="_blank">here</a>.
+There's also a live demo <a href="https://mlison.github.io/game-of-life/" target="_blank">here</a>.
 
 ![](https://github.com/mlison/game-of-life/raw/master/demo.gif)
 
