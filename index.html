@@ -1,0 +1,193 @@
+<html>
+<head>
+  <title>Conway's life: Javascript edition</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="hint.min.css">
+</head>
+
+<body>
+<div class="container">
+  <h1>Conway's game of life: Javascript equality table edition</h1>
+  <p>What you see bellow is a standard implementation of mathematical game first devised by the British mathematician <a href="https://en.wikipedia.org/wiki/John_Horton_Conway" target="_blank">John Horton Conway</a> in 1970. The "game" is a zero-player game, meaning that its evolution is determined by its initial state, requiring no further input.</p>
+  <p>Now this particular one is seeded by <a href="https://dorey.github.io/JavaScript-Equality-Table/" target="_blank">equality table</a> of various Javascript values. The example uses loose comparison operator (==) which is notoriously known to produce rather counter-intuitive results.</p>
+  <p>Hover over a cell to see what is the value / comparison it represents. You can also toggle the cells by clicking on them and create your own patterns.</p>
+
+  <div class="game"></div>
+  <button id="tick">Tick</button>
+  <button id="start">START</button>
+
+  <p class="hidden">Surprisingly enough, Javascript doesn't anihilate itself. There appear to be stable elements to it's ecosystem, and potential to evolve past it's original boundries ;)</p>
+
+  <div class="footer">
+    Michal made this • <a href="http://twitter.com/emlison" target="_blank">@emlison</a> • <a href="http://github.com/mlison" target="_blank">Github</a>
+  </div>
+</div>
+
+<script type="text/javascript">
+
+function makeCell(x, y) {
+  var cell = {
+    living: false,
+    neighbours: []
+  };
+
+  cell.neighbours.push({ x: x+1, y: y   });
+  cell.neighbours.push({ x: x+1, y: y-1 });
+  cell.neighbours.push({ x: x+1, y: y+1 });
+  cell.neighbours.push({ x: x-1, y: y   });
+  cell.neighbours.push({ x: x-1, y: y-1 });
+  cell.neighbours.push({ x: x-1, y: y+1 });
+  cell.neighbours.push({ x: x  , y: y+1 });
+  cell.neighbours.push({ x: x  , y: y-1 });
+
+  return cell;
+}
+
+function makeCells() {
+  var cells = [], cell, x, y;
+
+  for (y = 0; y < 50; y++) {
+    cells[y] = [];
+    for (x = 0; x < 50; x++) {
+      cells[y].push( makeCell(x,y) );
+    }
+  }
+
+  // these are the javascript values we want to compare with each other
+  var values = [
+    'true',
+    'false',
+    '1',
+    '0',
+    '-1',
+    '"true"',
+    '"false"',
+    '"1"',
+    '"0"',
+    '"-1"',
+    '""',
+    'null',
+    'undefined',
+    'Infinity',
+    '-Infinity',
+    '[]',
+    'new Object()',
+    '[[]]',
+    '[0]',
+    '[1]',
+    'NaN'
+  ];
+
+  // make loose comparison between values and mark cells
+  values.forEach(function (valueY, y) {
+    values.forEach(function (valueX, x) {
+      // +15 to make it go in the middle
+      cells[y+15][x+15].living = (eval(valueY) == eval(valueX));
+      cells[y+15][x+15].title = valueY + ' == ' + valueX;
+    });
+  });
+
+  return cells;
+}
+
+// check if a cell exists at position
+function isCell(pos) {
+  return cells[pos.y] && cells[pos.y][pos.x];
+}
+
+function isCellAlive(cell) {
+  return cell.living;
+}
+
+// get the cell at position
+function getCell(pos) {
+  return cells[pos.y][pos.x];
+}
+
+// transform cell coordinates into object references, if one exists
+function transformNeighbours(cells) {
+  return cells.map(function (row) {
+    return row.map(function (cell) {
+      cell.neighbours = cell.neighbours.filter(isCell).map(getCell);
+      return cell;
+    });
+  });
+}
+
+function draw(cells) {
+  var game = document.getElementsByClassName('game')[0];
+  game.innerHTML = '';
+  cells.forEach(function (row) {
+    row.forEach(function (cell) {
+      var div = document.createElement('div');
+      div.className = 'cell hint--top'
+      div.className += cell.living ? ' living' : '';
+      div.setAttribute('data-hint', cell.title || '');
+      div.addEventListener('click',function () {
+        cell.living = !cell.living;
+        draw(cells);
+      });
+      game.appendChild(div);
+    });
+  });
+}
+
+// One game tick will iterate over all cells
+// and update whether they're alive or not
+function tick() {
+  // actions to be executed after each tick
+  var actions = [];
+
+  // loop through the whole set and update life condition
+  cells.forEach(function (rows, y) {
+    rows.forEach(function (cell, x) {
+      var len = cell.neighbours.filter(isCellAlive).length,
+          pos = { x: x, y: y };
+
+      if (len < 2 || (cell.living && len > 3)) {
+        pos.living = false;
+        actions.push(pos);
+      } else if (len === 3) {
+        pos.living = true;
+        actions.push(pos);
+      }
+    });
+  });
+
+  // execute actions after the whole iteration is done
+  // (doing them mid-iteration would break the rules)
+  actions.forEach(function (action) {
+    cells[action.y][action.x].living = action.living;
+  });
+
+  // redraw the whole thing
+  draw(cells);
+}
+
+var interval, firstTime = true;
+var cells = makeCells();
+cells = transformNeighbours(cells);
+window.onload = draw.bind(this, cells);
+
+document.getElementById('tick').addEventListener('click', tick);
+document.getElementById('start').addEventListener('click', function (e) {
+  if (!interval) {
+    interval = setInterval(tick, 350);
+    e.target.innerHTML = 'Stop';
+  } else {
+    clearInterval(interval);
+    e.target.innerHTML = 'START';
+    interval = null;
+  }
+
+  if (firstTime) {
+    firstTime = false;
+    setTimeout(function () {
+      document.getElementsByClassName('hidden')[0].className = '';
+    },10*1000);
+  }
+});
+
+</script>
+</body>
+</html>
